@@ -1,0 +1,17 @@
+{
+  "name": "Bank Pay-In Slip Generator",
+  "short_name": "Bank Slip Gen",
+  "description": "Generate and save Bank Pay-In Slips easily.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0072bc",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

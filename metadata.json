@@ -1,0 +1,5 @@
+{
+  "name": "Bank Pay-In Slip Generator",
+  "description": "Generate and save Bank Pay-In Slips easily.",
+  "requestFramePermissions": []
+}
