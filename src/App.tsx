@@ -19,7 +19,7 @@ export default function App() {
   const [data, setData] = useState({
     date: getCurrentDateDDMMYYYY(),
     bankName: 'STATE BANK OF INDIA',
-    logo: '/SBI_Logo.png',
+    logo: 'SBI_Logo.png',
     logoScale: 1,
     branchName: '',
     branchCode: '',
@@ -51,11 +51,94 @@ export default function App() {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const swRegistrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const [showIosBanner, setShowIosBanner] = useState(false);
 
   const slipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadHistory();
+  }, []);
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (e: Event) => {
+      // Chrome/Edge: capture the event so we can show a custom install UI
+      // @ts-ignore
+      console.log('beforeinstallprompt event fired', e);
+      // @ts-ignore
+      if (e && typeof (e as any).preventDefault === 'function') (e as any).preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    const onAppInstalled = () => {
+      setDeferredPrompt(null);
+      setShowInstallButton(false);
+      console.log('PWA installed (appinstalled event)');
+    };
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt as EventListener);
+    window.addEventListener('appinstalled', onAppInstalled as EventListener);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt as EventListener);
+      window.removeEventListener('appinstalled', onAppInstalled as EventListener);
+    };
+  }, []);
+
+  // Log manifest loading and basic checks for debugging PWA install issues
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await fetch('manifest.json');
+        if (!resp.ok) {
+          console.warn('Manifest fetch returned non-OK status', resp.status);
+          return;
+        }
+        const manifest = await resp.json();
+        console.log('Loaded manifest.json', manifest);
+        if (!manifest.icons || manifest.icons.length === 0) console.warn('Manifest has no icons');
+      } catch (err) {
+        console.warn('Failed to fetch manifest.json', err);
+      }
+      try {
+        console.log('Service worker controller present?', !!navigator.serviceWorker?.controller);
+      } catch {}
+    })();
+  }, []);
+
+  // Detect iOS Safari and show inline A2HS instructions (iOS doesn't support beforeinstallprompt)
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isIos = /iphone|ipad|ipod/.test(ua);
+    const isInStandalone = ('standalone' in window && (window as any).standalone) || (navigator as any).standalone;
+    setShowIosBanner(!!(isIos && !isInStandalone));
+  }, []);
+
+  useEffect(() => {
+    const onSwWaiting = (e: any) => {
+      const reg: ServiceWorkerRegistration | undefined = e?.detail;
+      if (reg) {
+        swRegistrationRef.current = reg;
+        setUpdateAvailable(true);
+      }
+    };
+
+    window.addEventListener('swWaiting', onSwWaiting as EventListener);
+
+    // When the new SW takes control, reload so the user sees the updated app
+    const onControllerChange = () => {
+      window.location.reload();
+    };
+    navigator.serviceWorker?.addEventListener('controllerchange', onControllerChange);
+
+    return () => {
+      window.removeEventListener('swWaiting', onSwWaiting as EventListener);
+      navigator.serviceWorker?.removeEventListener('controllerchange', onControllerChange);
+    };
   }, []);
 
   const loadHistory = async () => {
@@ -395,6 +478,33 @@ export default function App() {
             </h1>
           </div>
           <div className="flex flex-wrap gap-3 justify-center md:justify-end">
+            {showInstallButton && (
+              <button
+                onClick={async () => {
+                  if (!deferredPrompt) return;
+                  try {
+                    // @ts-ignore
+                    deferredPrompt.prompt();
+                    // @ts-ignore
+                    const choice = await deferredPrompt.userChoice;
+                    if (choice && choice.outcome === 'accepted') {
+                      console.log('User accepted the PWA install');
+                    } else {
+                      console.log('User dismissed the PWA install');
+                    }
+                  } catch (err) {
+                    console.warn('Install prompt failed:', err);
+                  } finally {
+                    setDeferredPrompt(null);
+                    setShowInstallButton(false);
+                  }
+                }}
+                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                Install
+              </button>
+            )}
            
             <button
               onClick={() => setShowSetupModal(true)}
@@ -435,6 +545,34 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {updateAvailable && (
+          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-60 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded-md shadow-md flex items-center gap-3">
+            <div className="text-sm font-medium">Update available</div>
+            <button
+              onClick={async () => {
+                const reg = swRegistrationRef.current;
+                if (!reg || !reg.waiting) return;
+                try {
+                  reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                } catch (err) {
+                  console.warn('Failed to post skipWaiting:', err);
+                }
+              }}
+              className="bg-yellow-600 text-white px-3 py-1.5 rounded-md text-sm font-semibold"
+            >
+              Update
+            </button>
+            <button onClick={() => setUpdateAvailable(false)} className="text-sm text-yellow-700 underline">Dismiss</button>
+          </div>
+        )}
+
+        {showIosBanner && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-60 bg-slate-900 text-white px-4 py-3 rounded-md shadow-md flex items-center gap-3">
+            <div className="text-sm">Install on iPhone: tap <span className="font-semibold">Share</span> → <span className="font-semibold">Add to Home Screen</span></div>
+            <button onClick={() => setShowIosBanner(false)} className="ml-3 text-sm underline">Dismiss</button>
+          </div>
+        )}
 
         <AnimatePresence>
           {showHistory && (

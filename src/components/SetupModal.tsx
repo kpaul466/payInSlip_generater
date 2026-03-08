@@ -194,7 +194,7 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                     <div className="space-y-2">
                       <select
                         name="logo"
-                        value={['/SBI_Logo.png', 'none', '/CBI_Logo.png', '/PNB_Logo.png'].includes(data.logo) ? data.logo : 'custom'}
+                        value={['SBI_Logo.png', 'none', 'CBI_Logo.png', 'PNB_Logo.png'].includes(data.logo) ? data.logo : 'custom'}
                         onChange={(e) => {
                           const v = e.target.value;
                           if (v === 'custom') {
@@ -205,11 +205,11 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                         }}
                         className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#0072bc] outline-none transition-all"
                       >
-                        <option value="/SBI_Logo.png">SBI Logo (Default)</option>
-                        <option value="/CBI_Logo.png">Central Bank of India</option>
-                        <option value="/PNB_Logo.png">Punjab National Bank</option>
+                        <option value="SBI_Logo.png">SBI Logo (Default)</option>
+                        <option value="CBI_Logo.png">Central Bank of India</option>
+                        <option value="PNB_Logo.png">Punjab National Bank</option>
                         <option value="none">No Logo</option>
-                        {![ '/SBI_Logo.png', 'none', '/CBI_Logo.png', '/PNB_Logo.png' ].includes(data.logo) && <option value="custom">Custom Logo</option>}
+                        {![ 'SBI_Logo.png', 'none', 'CBI_Logo.png', 'PNB_Logo.png' ].includes(data.logo) && <option value="custom">Custom Logo</option>}
                       </select>
                       <input
                         type="file"
@@ -227,10 +227,10 @@ export const SetupModal: React.FC<SetupModalProps> = ({
                         className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#0072bc] hover:file:bg-blue-100"
                       />
                       {/* Allow entering a path to an image in the public folder when custom is selected */}
-                      {![ '/SBI_Logo.png', 'none', '/CBI_Logo.png', '/PNB_Logo.png' ].includes(data.logo) && (
+                      {![ 'SBI_Logo.png', 'none', 'CBI_Logo.png', 'PNB_Logo.png' ].includes(data.logo) && (
                         <input
                           type="text"
-                          placeholder="/my-logo.png (optional: path in public/)"
+                          placeholder="my-logo.png (optional: path in public/)"
                           value={data.logo && !data.logo.startsWith('data:') ? data.logo : ''}
                           onChange={(e) => setData(prev => ({ ...prev, logo: e.target.value }))}
                           className="w-full mt-2 px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#0072bc] outline-none transition-all"

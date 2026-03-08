@@ -26,9 +26,9 @@ export const PayInSlip = React.forwardRef<HTMLDivElement, PayInSlipProps>(({ dat
   const denoms = [500, 200, 100, 50, 20, 10, 'COIN'];
   const logoScale = data.logoScale || 1;
   const logoMap: Record<string, string> = {
-    sbi: '/SBI_Logo.png',
-    cbi: '/CBI_Logo.png',
-    pnb: '/PNB_Logo.png',
+    sbi: 'SBI_Logo.png',
+    cbi: 'CBI_Logo.png',
+    pnb: 'PNB_Logo.png',
   };
   const rawLogo = data.logo || '';
   const resolvedLogo = logoMap[rawLogo] || rawLogo;
@@ -67,7 +67,7 @@ export const PayInSlip = React.forwardRef<HTMLDivElement, PayInSlipProps>(({ dat
           {(!resolvedLogo || resolvedLogo === 'none') ? null : (
             (() => {
               // If resolvedLogo is a data URL or a public path/http URL, render an <img>
-              if (typeof resolvedLogo === 'string' && (resolvedLogo.startsWith('data:') || resolvedLogo.startsWith('/') || resolvedLogo.startsWith('http')) ) {
+              if (typeof resolvedLogo === 'string' && (resolvedLogo.startsWith('data:') || resolvedLogo.startsWith('http') || /\.(png|jpe?g|svg|webp)$/i.test(resolvedLogo)) ) {
                 return (
                   <img
                     src={resolvedLogo}
