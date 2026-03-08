@@ -1,14 +1,15 @@
 const CACHE_VERSION = 'v5';
 const CACHE_NAME = `bank-slip-gen-${CACHE_VERSION}`;
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.svg',
-  '/index.css',
-  '/SBI_Logo.png',
-  '/CBI_Logo.png',
-  '/PNB_Logo.png',
+  './',
+  'index.html',
+  'offline.html',
+  'manifest.json',
+  'icon.svg',
+  'index.css',
+  'SBI_Logo.png',
+  'CBI_Logo.png',
+  'PNB_Logo.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -36,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   // App shell routing: navigation requests should return index.html from cache when offline
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html'))
+      fetch(event.request).catch(() => caches.match('offline.html') || caches.match('index.html'))
     );
     return;
   }
@@ -60,4 +61,12 @@ self.addEventListener('fetch', (event) => {
         });
     })
   );
+});
+
+// Allow the page to trigger skipWaiting by posting a message to the SW
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
